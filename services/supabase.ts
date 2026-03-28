@@ -2,16 +2,43 @@
 // KVKK: TC Kimlik bilgileri DB'ye gönderilmeden önce şifrelenir.
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 const SUPABASE_URL  = process.env.EXPO_PUBLIC_SUPABASE_URL  ?? '';
 const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
-// Expo SecureStore adapter (şifreli token saklama)
+// Platform-aware storage adapter:
+// - Native (iOS/Android): expo-secure-store (şifreli Keychain/Keystore)
+// - Web: localStorage (expo-secure-store web desteği yok)
 const ExpoSecureStoreAdapter = {
-  getItem:    (key: string) => SecureStore.getItemAsync(key),
-  setItem:    (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+  getItem: (key: string) => {
+    if (Platform.OS === 'web') {
+      if (typeof localStorage !== 'undefined') {
+        return localStorage.getItem(key);
+      }
+      return null;
+    }
+    return SecureStore.getItemAsync(key);
+  },
+  setItem: (key: string, value: string) => {
+    if (Platform.OS === 'web') {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(key, value);
+      }
+    } else {
+      return SecureStore.setItemAsync(key, value);
+    }
+  },
+  removeItem: (key: string) => {
+    if (Platform.OS === 'web') {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(key);
+      }
+    } else {
+      return SecureStore.deleteItemAsync(key);
+    }
+  },
 };
 
 let _supabase: SupabaseClient | null = null;
@@ -25,9 +52,9 @@ function getSupabaseClient(): SupabaseClient {
     }
     _supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
       auth: {
-        storage:          ExpoSecureStoreAdapter,
-        autoRefreshToken: true,
-        persistSession:   true,
+        storage:            ExpoSecureStoreAdapter,
+        autoRefreshToken:   true,
+        persistSession:     true,
         detectSessionInUrl: false,
       },
     });
