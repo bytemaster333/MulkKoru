@@ -31,6 +31,12 @@ module.exports = {
         warning:  '#f59e0b',
         danger:   '#ef4444',
         info:     '#3b82f6',
+        // ── Dark theme text tokens ─────────────────────────
+        dark: {
+          text:    '#f1f5f9',
+          subtext: '#94a3b8',
+          bg:      '#0f0f23',
+        },
         // ── Surfaces ──────────────────────────────────────
         surface: {
           dark:    '#0f0f23',
