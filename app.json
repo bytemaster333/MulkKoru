@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#3525cd"
       },
-      "package": "com.mulkkoru.app"
+      "package": "com.mulkkoru.app",
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
