@@ -1,5 +1,5 @@
 // MülkKoru Design System — Color Tokens
-// Referans: #3525cd ana marka, Fintech/Bento-box dark UI
+// Referans: #3525cd ana marka, Fintech/Bento-box UI
 
 export const Colors = {
   // ── Brand ──────────────────────────────────
@@ -27,6 +27,8 @@ export const Colors = {
   dangerBg:  '#7f1d1d22',
   info:      '#3b82f6',
   infoBg:    '#1e3a5f22',
+  error:     '#ba1a1a',
+  tertiary:  '#005338',
 
   // ── Dark surfaces ───────────────────────────
   dark: {
@@ -41,13 +43,15 @@ export const Colors = {
 
   // ── Light surfaces ──────────────────────────
   light: {
-    bg:      '#f8fafc',
-    surface: '#ffffff',
-    card:    '#ffffff',
-    border:  '#e2e8f0',
-    muted:   '#94a3b8',
-    text:    '#0f172a',
-    subtext: '#64748b',
+    bg:         '#f8fafc',
+    surface:    '#faf8ff',
+    container:  '#eaedff',
+    onSurface:  '#131b2e',
+    card:       '#ffffff',
+    border:     '#e2e8f0',
+    muted:      '#94a3b8',
+    text:       '#0f172a',
+    subtext:    '#64748b',
   },
 
   white:     '#ffffff',

@@ -31,25 +31,32 @@ module.exports = {
         warning:  '#f59e0b',
         danger:   '#ef4444',
         info:     '#3b82f6',
+        error:    '#ba1a1a',
+        tertiary: '#005338',
         // ── Dark theme text tokens ─────────────────────────
         dark: {
           text:    '#f1f5f9',
           subtext: '#94a3b8',
           bg:      '#0f0f23',
         },
+        // ── On-surface (light theme text) ──────────────────
+        'on-surface': '#131b2e',
         // ── Surfaces ──────────────────────────────────────
         surface: {
-          dark:    '#0f0f23',
-          card:    '#1a1a3e',
-          border:  '#2d2d5e',
-          muted:   '#6b7280',
+          DEFAULT:   '#faf8ff',
+          dark:      '#0f0f23',
+          card:      '#1a1a3e',
+          border:    '#2d2d5e',
+          muted:     '#6b7280',
+          container: '#eaedff',
         },
       },
       fontFamily: {
-        sans:    ['System'],
-        mono:    ['monospace'],
+        sans: ['System'],
+        mono: ['monospace'],
       },
       borderRadius: {
+        'xl':  '20px',
         '2xl': '16px',
         '3xl': '24px',
       },
