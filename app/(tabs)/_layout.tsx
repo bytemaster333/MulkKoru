@@ -1,27 +1,43 @@
 import { Tabs } from 'expo-router';
-import { LayoutDashboard, Building2, Users, Calendar } from 'lucide-react-native';
+import { StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LayoutDashboard, Building2, Users, Calendar, UserCircle } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown:            false,
-        tabBarStyle: {
-          backgroundColor:      Colors.dark.surface,
-          borderTopColor:       Colors.dark.border,
-          borderTopWidth:       1,
-          height:               64,
-          paddingBottom:        10,
-          paddingTop:           8,
-        },
+        headerShown: false,
         tabBarActiveTintColor:   Colors.brand.DEFAULT,
-        tabBarInactiveTintColor: Colors.dark.muted,
+        tabBarInactiveTintColor: '#94a3b8',
         tabBarLabelStyle: {
-          fontSize:    11,
-          fontWeight:  '600',
-          marginTop:   2,
+          fontSize:   11,
+          fontWeight: '600',
+          marginTop:  2,
         },
+        tabBarStyle: {
+          backgroundColor: 'transparent',
+          borderTopWidth:  0,
+          height:          64,
+          paddingBottom:   10,
+          paddingTop:      8,
+          elevation:       0,
+        },
+        tabBarBackground: () => (
+          <BlurView
+            intensity={70}
+            tint="light"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderTopWidth: 1,
+                borderTopColor: '#eaedff',
+                backgroundColor: 'rgba(250, 248, 255, 0.7)',
+              },
+            ]}
+          />
+        ),
       }}
     >
       <Tabs.Screen
@@ -57,6 +73,15 @@ export default function TabLayout() {
           title: 'Takvim',
           tabBarIcon: ({ color, size }) => (
             <Calendar size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profil',
+          tabBarIcon: ({ color, size }) => (
+            <UserCircle size={size} color={color} />
           ),
         }}
       />

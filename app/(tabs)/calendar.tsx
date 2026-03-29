@@ -4,7 +4,10 @@ import {
   View, Text, FlatList, TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle, Clock, AlertCircle } from 'lucide-react-native';
+import {
+  ChevronLeft, ChevronRight, Calendar as CalendarIcon,
+  CheckCircle, Clock, AlertCircle,
+} from 'lucide-react-native';
 import { useMonthlyPayments } from '../../hooks/usePayments';
 import { paymentService } from '../../services/paymentService';
 import { formatCurrency, formatDate, formatStatus } from '../../utils/formatters';
@@ -12,11 +15,15 @@ import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import type { Payment, PaymentStatus } from '../../types';
 
-const STATUS_CONFIG: Record<PaymentStatus, { icon: typeof CheckCircle; color: string; badge: 'success' | 'warning' | 'danger' | 'neutral' }> = {
-  paid:    { icon: CheckCircle,  color: '#10b981', badge: 'success' },
-  pending: { icon: Clock,        color: '#f59e0b', badge: 'warning' },
-  partial: { icon: Clock,        color: '#3b82f6', badge: 'info' as 'neutral' },
-  overdue: { icon: AlertCircle,  color: '#ef4444', badge: 'danger' },
+const STATUS_CONFIG: Record<PaymentStatus, {
+  icon: typeof CheckCircle;
+  color: string;
+  badge: 'success' | 'warning' | 'danger' | 'neutral';
+}> = {
+  paid:    { icon: CheckCircle, color: '#10b981', badge: 'success' },
+  pending: { icon: Clock,       color: '#f59e0b', badge: 'warning' },
+  partial: { icon: Clock,       color: '#3b82f6', badge: 'neutral' },
+  overdue: { icon: AlertCircle, color: '#ba1a1a', badge: 'danger'  },
 };
 
 const TR_MONTHS = [
@@ -25,14 +32,16 @@ const TR_MONTHS = [
 ];
 
 export default function CalendarScreen() {
-  const now            = new Date();
+  const now               = new Date();
   const [year, setYear]   = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
 
   const { payments, loading, refetch } = useMonthlyPayments(year, month);
 
   const totalExpected = payments.reduce((s, p) => s + p.amount, 0);
-  const totalPaid     = payments.filter(p => p.status === 'paid').reduce((s, p) => s + (p.paid_amount ?? p.amount), 0);
+  const totalPaid     = payments
+    .filter(p => p.status === 'paid')
+    .reduce((s, p) => s + (p.paid_amount ?? p.amount), 0);
   const overdueCount  = payments.filter(p => p.status === 'overdue').length;
 
   function prevMonth() {
@@ -50,46 +59,46 @@ export default function CalendarScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView className="flex-1 bg-surface">
       {/* ── Header ─────────────────────────────────── */}
       <View className="px-5 pt-4 pb-3">
-        <Text className="text-2xl font-bold text-dark-text">Ödeme Takvimi</Text>
+        <Text className="text-2xl font-bold text-on-surface">Ödeme Takvimi</Text>
       </View>
 
       {/* ── Ay Navigasyonu ─────────────────────────── */}
-      <View className="mx-5 rounded-2xl bg-surface-card border border-surface-border p-4 gap-4">
+      <View className="mx-5 rounded-xl bg-brand-500 p-4 gap-4">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
             onPress={prevMonth}
-            className="w-9 h-9 rounded-xl bg-surface-border items-center justify-center"
+            className="w-9 h-9 rounded-xl bg-white/20 items-center justify-center"
           >
-            <ChevronLeft size={20} color="#94a3b8" />
+            <ChevronLeft size={20} color="#ffffff" />
           </TouchableOpacity>
-          <Text className="text-dark-text font-bold text-lg">
+          <Text className="text-white font-bold text-lg">
             {TR_MONTHS[month - 1]} {year}
           </Text>
           <TouchableOpacity
             onPress={nextMonth}
-            className="w-9 h-9 rounded-xl bg-surface-border items-center justify-center"
+            className="w-9 h-9 rounded-xl bg-white/20 items-center justify-center"
           >
-            <ChevronRight size={20} color="#94a3b8" />
+            <ChevronRight size={20} color="#ffffff" />
           </TouchableOpacity>
         </View>
 
         {/* Özet istatistikler */}
         <View className="flex-row gap-2">
-          <View className="flex-1 rounded-xl bg-success/10 p-3 gap-1">
-            <Text className="text-xs text-surface-muted">Tahsilat</Text>
-            <Text className="text-sm font-bold text-success">{formatCurrency(totalPaid)}</Text>
+          <View className="flex-1 rounded-xl bg-white/15 p-3 gap-1">
+            <Text className="text-xs text-white/70">Tahsilat</Text>
+            <Text className="text-sm font-bold text-white">{formatCurrency(totalPaid)}</Text>
           </View>
-          <View className="flex-1 rounded-xl bg-brand/10 p-3 gap-1">
-            <Text className="text-xs text-surface-muted">Beklenen</Text>
-            <Text className="text-sm font-bold text-brand-300">{formatCurrency(totalExpected)}</Text>
+          <View className="flex-1 rounded-xl bg-white/15 p-3 gap-1">
+            <Text className="text-xs text-white/70">Beklenen</Text>
+            <Text className="text-sm font-bold text-white">{formatCurrency(totalExpected)}</Text>
           </View>
           {overdueCount > 0 && (
-            <View className="flex-1 rounded-xl bg-danger/10 p-3 gap-1">
-              <Text className="text-xs text-surface-muted">Gecikmiş</Text>
-              <Text className="text-sm font-bold text-danger">{overdueCount} ödeme</Text>
+            <View className="flex-1 rounded-xl bg-white/15 p-3 gap-1">
+              <Text className="text-xs text-white/70">Gecikmiş</Text>
+              <Text className="text-sm font-bold text-white">{overdueCount} ödeme</Text>
             </View>
           )}
         </View>
@@ -114,26 +123,31 @@ export default function CalendarScreen() {
           }
           ListEmptyComponent={
             <View className="items-center py-16 gap-3">
-              <CalendarIcon size={40} color="#6b7280" />
+              <View className="w-16 h-16 rounded-full bg-surface-container items-center justify-center">
+                <CalendarIcon size={32} color="#6b7280" />
+              </View>
               <Text className="text-surface-muted text-sm text-center">
                 Bu ay için ödeme kaydı bulunmuyor.
               </Text>
             </View>
           }
           renderItem={({ item }: { item: Payment }) => {
-            const config    = STATUS_CONFIG[item.status];
-            const Icon      = config.icon;
+            const config      = STATUS_CONFIG[item.status];
+            const Icon        = config.icon;
             const canMarkPaid = item.status === 'pending' || item.status === 'overdue';
 
             return (
-              <View className="rounded-2xl bg-surface-card border border-surface-border p-4 gap-3">
+              <View className="rounded-xl bg-white border border-surface-container p-4 gap-3">
                 <View className="flex-row items-start justify-between gap-2">
                   <View className="flex-row items-center gap-2 flex-1">
-                    <View className={`rounded-xl p-2 bg-${config.badge === 'success' ? 'success' : config.badge === 'warning' ? 'warning' : config.badge === 'danger' ? 'danger' : 'brand'}/20`}>
+                    <View
+                      className="rounded-xl p-2"
+                      style={{ backgroundColor: `${config.color}18` }}
+                    >
                       <Icon size={16} color={config.color} />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-sm font-semibold text-dark-text" numberOfLines={1}>
+                      <Text className="text-sm font-semibold text-on-surface" numberOfLines={1}>
                         {(item.contract as { properties?: { title?: string } } | undefined)?.properties?.title ?? 'Mülk'}
                       </Text>
                       <Text className="text-xs text-surface-muted">
@@ -145,7 +159,7 @@ export default function CalendarScreen() {
                 </View>
 
                 <View className="flex-row items-center justify-between">
-                  <Text className="text-lg font-bold text-dark-text">
+                  <Text className="text-lg font-bold text-on-surface">
                     {formatCurrency(item.amount)}
                   </Text>
                   {canMarkPaid && (

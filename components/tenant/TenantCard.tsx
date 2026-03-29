@@ -18,17 +18,16 @@ export function TenantCard({ tenant, onPress }: TenantCardProps) {
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
-      className="rounded-2xl bg-surface-card border border-surface-border p-4 gap-3"
+      className="rounded-xl bg-white border border-surface-container p-4 gap-3"
     >
       {/* Header */}
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-3 flex-1">
-          {/* Avatar placeholder */}
-          <View className="w-10 h-10 rounded-full bg-brand/20 items-center justify-center">
+          <View className="w-10 h-10 rounded-full bg-brand-500/10 items-center justify-center">
             <User size={20} color="#3525cd" />
           </View>
           <View className="flex-1">
-            <Text className="text-base font-semibold text-dark-text" numberOfLines={1}>
+            <Text className="text-base font-semibold text-on-surface" numberOfLines={1}>
               {tenant.full_name}
             </Text>
             {tenant.tc_no_masked && (
@@ -63,7 +62,7 @@ export function TenantCard({ tenant, onPress }: TenantCardProps) {
 
       {/* Sözleşme özeti */}
       {contract && (
-        <View className="pt-2 border-t border-surface-border flex-row items-center justify-between">
+        <View className="pt-2 border-t border-surface-container flex-row items-center justify-between">
           <Text className="text-xs text-surface-muted">
             {(contract.property as { title?: string } | undefined)?.title ?? 'Mülk'}
           </Text>

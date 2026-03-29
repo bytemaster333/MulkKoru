@@ -24,12 +24,12 @@ export default function PropertiesScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView className="flex-1 bg-surface">
       {/* ── Header ─────────────────────────────────── */}
       <View className="px-5 pt-4 pb-3 gap-4">
         <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold text-dark-text">Mülklerim</Text>
+            <Text className="text-2xl font-bold text-on-surface">Mülklerim</Text>
             <Text className="text-sm text-surface-muted">
               {properties.length} mülk kayıtlı
             </Text>
@@ -44,10 +44,10 @@ export default function PropertiesScreen() {
         </View>
 
         {/* Arama */}
-        <View className="flex-row items-center gap-2 rounded-xl bg-surface-card border border-surface-border px-3 py-2.5">
+        <View className="flex-row items-center gap-2 rounded-xl bg-white border border-surface-container px-3 py-2.5">
           <Search size={16} color="#6b7280" />
           <TextInput
-            className="flex-1 text-dark-text text-sm"
+            className="flex-1 text-on-surface text-sm"
             placeholder="Mülk adı veya şehir ara..."
             placeholderTextColor="#6b7280"
             value={query}

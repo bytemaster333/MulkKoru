@@ -18,7 +18,7 @@ export function PropertyCard({ property, onPress }: PropertyCardProps) {
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
-      className="rounded-2xl bg-surface-card border border-surface-border overflow-hidden"
+      className="rounded-xl bg-white border border-surface-container overflow-hidden"
     >
       {/* Üst bar — mülk tipi rengi */}
       <View className="h-1 bg-brand-500" />
@@ -27,11 +27,11 @@ export function PropertyCard({ property, onPress }: PropertyCardProps) {
         {/* Başlık satırı */}
         <View className="flex-row items-start justify-between gap-2">
           <View className="flex-row items-center gap-2 flex-1">
-            <View className="rounded-xl bg-brand/20 p-2">
+            <View className="rounded-xl bg-brand-500/10 p-2">
               <Home size={18} color="#3525cd" />
             </View>
             <View className="flex-1">
-              <Text className="text-base font-semibold text-dark-text" numberOfLines={1}>
+              <Text className="text-base font-semibold text-on-surface" numberOfLines={1}>
                 {property.title}
               </Text>
               <Text className="text-xs text-surface-muted">{formatPropertyType(property.property_type)}</Text>
@@ -52,7 +52,7 @@ export function PropertyCard({ property, onPress }: PropertyCardProps) {
         </View>
 
         {/* Bilgi satırı */}
-        <View className="flex-row items-center gap-4 pt-1 border-t border-surface-border">
+        <View className="flex-row items-center gap-4 pt-1 border-t border-surface-container">
           {property.rooms && (
             <Text className="text-xs text-surface-muted">{property.rooms}</Text>
           )}

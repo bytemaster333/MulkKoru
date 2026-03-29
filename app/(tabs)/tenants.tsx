@@ -26,12 +26,12 @@ export default function TenantsScreen() {
   const activeCount = tenants.filter(t => t.active_contract).length;
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView className="flex-1 bg-surface">
       {/* ── Header ─────────────────────────────────── */}
       <View className="px-5 pt-4 pb-3 gap-4">
         <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold text-dark-text">Kiracılarım</Text>
+            <Text className="text-2xl font-bold text-on-surface">Kiracılarım</Text>
             <Text className="text-sm text-surface-muted">
               {tenants.length} kayıtlı · {activeCount} aktif
             </Text>
@@ -46,10 +46,10 @@ export default function TenantsScreen() {
         </View>
 
         {/* Arama */}
-        <View className="flex-row items-center gap-2 rounded-xl bg-surface-card border border-surface-border px-3 py-2.5">
+        <View className="flex-row items-center gap-2 rounded-xl bg-white border border-surface-container px-3 py-2.5">
           <Search size={16} color="#6b7280" />
           <TextInput
-            className="flex-1 text-dark-text text-sm"
+            className="flex-1 text-on-surface text-sm"
             placeholder="Ad, telefon veya e-posta ara..."
             placeholderTextColor="#6b7280"
             value={query}
