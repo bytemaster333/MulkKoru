@@ -24,7 +24,7 @@ export default function RootLayout() {
   }, [user, loading, segments]);
 
   if (loading) {
-    return <View className="flex-1 bg-surface-dark" />;
+    return <View className="flex-1 bg-surface" />;
   }
 
   return (

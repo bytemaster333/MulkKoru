@@ -21,22 +21,22 @@ export function Input({
   const [focused, setFocused] = useState(false);
 
   const borderColor = error
-    ? 'border-danger'
+    ? 'border-error'
     : focused
     ? 'border-brand-500'
-    : 'border-surface-border';
+    : 'border-surface-container';
 
   return (
     <View className="gap-1">
       {label && (
-        <Text className="text-sm font-medium text-dark-subtext">{label}</Text>
+        <Text className="text-sm font-medium text-on-surface">{label}</Text>
       )}
       <View
-        className={`flex-row items-center rounded-xl border bg-surface-card px-3 py-3 gap-2 ${borderColor}`}
+        className={`flex-row items-center rounded-xl border bg-white px-3 py-3 gap-2 ${borderColor}`}
       >
         {leftIcon}
         <TextInput
-          className={`flex-1 text-base text-dark-text ${className}`}
+          className={`flex-1 text-base text-on-surface ${className}`}
           placeholderTextColor="#6b7280"
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
@@ -45,7 +45,7 @@ export function Input({
         {rightIcon}
       </View>
       {error ? (
-        <Text className="text-xs text-danger">{error}</Text>
+        <Text className="text-xs text-error">{error}</Text>
       ) : hint ? (
         <Text className="text-xs text-surface-muted">{hint}</Text>
       ) : null}

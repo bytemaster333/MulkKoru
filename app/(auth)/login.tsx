@@ -43,7 +43,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-surface-dark"
+      className="flex-1 bg-surface"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -53,11 +53,11 @@ export default function LoginScreen() {
       >
         {/* Logo */}
         <View className="items-center mb-10 gap-3">
-          <View className="w-20 h-20 rounded-3xl bg-brand-500 items-center justify-center shadow-lg">
+          <View className="w-20 h-20 rounded-3xl bg-brand-500 items-center justify-center">
             <Shield size={40} color="#ffffff" />
           </View>
           <View className="items-center gap-1">
-            <Text className="text-3xl font-bold text-dark-text">MülkKoru</Text>
+            <Text className="text-3xl font-bold text-on-surface">MülkKoru</Text>
             <Text className="text-sm text-surface-muted">Akıllı Kira Yönetimi</Text>
           </View>
         </View>
@@ -98,7 +98,7 @@ export default function LoginScreen() {
         <View className="flex-row items-center justify-center mt-8 gap-1">
           <Text className="text-sm text-surface-muted">Hesabınız yok mu?</Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text className="text-sm font-semibold text-brand-300">Kayıt Ol</Text>
+            <Text className="text-sm font-semibold text-brand-500">Kayıt Ol</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

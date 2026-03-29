@@ -49,7 +49,7 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-surface-dark"
+      className="flex-1 bg-surface"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -59,7 +59,7 @@ export default function RegisterScreen() {
       >
         {/* Header */}
         <TouchableOpacity onPress={() => router.back()} className="mb-6">
-          <Text className="text-brand-300 text-sm">← Geri Dön</Text>
+          <Text className="text-brand-500 text-sm">← Geri Dön</Text>
         </TouchableOpacity>
 
         <View className="items-center mb-8 gap-3">
@@ -67,7 +67,7 @@ export default function RegisterScreen() {
             <Shield size={32} color="#ffffff" />
           </View>
           <View className="items-center gap-1">
-            <Text className="text-2xl font-bold text-dark-text">Hesap Oluştur</Text>
+            <Text className="text-2xl font-bold text-on-surface">Hesap Oluştur</Text>
             <Text className="text-sm text-surface-muted">MülkKoru'ya katılın</Text>
           </View>
         </View>
@@ -122,9 +122,9 @@ export default function RegisterScreen() {
 
         <Text className="text-xs text-surface-muted text-center mt-6 leading-4">
           Kayıt olarak KVKK kapsamındaki{' '}
-          <Text className="text-brand-300">Gizlilik Politikası</Text>'nı
+          <Text className="text-brand-500">Gizlilik Politikası</Text>'nı
           {' '}ve{' '}
-          <Text className="text-brand-300">Kullanım Şartları</Text>'nı kabul etmiş olursunuz.
+          <Text className="text-brand-500">Kullanım Şartları</Text>'nı kabul etmiş olursunuz.
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -61,21 +61,21 @@ export default function AddTenantModal() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView className="flex-1 bg-surface">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-5 py-4 border-b border-surface-border">
+        <View className="flex-row items-center justify-between px-5 py-4 border-b border-surface-container">
           <View className="flex-row items-center gap-2">
-            <View className="rounded-xl bg-brand/20 p-2">
+            <View className="rounded-xl bg-brand-500/10 p-2">
               <User size={18} color="#3525cd" />
             </View>
-            <Text className="text-lg font-bold text-dark-text">Yeni Kiracı Ekle</Text>
+            <Text className="text-lg font-bold text-on-surface">Yeni Kiracı Ekle</Text>
           </View>
           <TouchableOpacity onPress={() => router.back()}>
-            <X size={22} color="#94a3b8" />
+            <X size={22} color="#6b7280" />
           </TouchableOpacity>
         </View>
 
@@ -86,9 +86,9 @@ export default function AddTenantModal() {
           showsVerticalScrollIndicator={false}
         >
           {/* KVKK Uyarısı */}
-          <View className="flex-row items-start gap-2 rounded-xl bg-brand/10 p-3 border border-brand/20">
-            <Info size={16} color="#3525cd" className="mt-0.5" />
-            <Text className="text-xs text-brand-200 flex-1 leading-4">
+          <View className="flex-row items-start gap-2 rounded-xl bg-surface-container p-3 border border-brand-100">
+            <Info size={16} color="#3525cd" />
+            <Text className="text-xs text-on-surface flex-1 leading-4">
               Kişisel veriler KVKK kapsamında korunmaktadır. TC Kimlik No yalnızca maskelenmiş
               hâliyle saklanır; ham veri cihazınızda tutulmaz.
             </Text>
@@ -135,15 +135,15 @@ export default function AddTenantModal() {
           />
 
           {/* Acil İletişim */}
-          <View className="flex-row items-center justify-between rounded-xl bg-surface-card border border-surface-border p-4">
+          <View className="flex-row items-center justify-between rounded-xl bg-white border border-surface-container p-4">
             <View>
-              <Text className="text-sm font-medium text-dark-text">Acil İletişim Kişisi</Text>
+              <Text className="text-sm font-medium text-on-surface">Acil İletişim Kişisi</Text>
               <Text className="text-xs text-surface-muted">Opsiyonel</Text>
             </View>
             <Switch
               value={showEmergency}
               onValueChange={setShowEmergency}
-              trackColor={{ false: '#2d2d5e', true: '#3525cd' }}
+              trackColor={{ false: '#eaedff', true: '#3525cd' }}
               thumbColor="#ffffff"
             />
           </View>
@@ -181,7 +181,7 @@ export default function AddTenantModal() {
         </ScrollView>
 
         {/* Footer */}
-        <View className="px-5 py-4 border-t border-surface-border">
+        <View className="px-5 py-4 border-t border-surface-container">
           <Button
             title="Kiracıyı Kaydet"
             onPress={handleSubmit}

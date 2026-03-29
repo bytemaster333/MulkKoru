@@ -59,21 +59,21 @@ export default function AddPropertyModal() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView className="flex-1 bg-surface">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-5 py-4 border-b border-surface-border">
+        <View className="flex-row items-center justify-between px-5 py-4 border-b border-surface-container">
           <View className="flex-row items-center gap-2">
-            <View className="rounded-xl bg-brand/20 p-2">
+            <View className="rounded-xl bg-brand-500/10 p-2">
               <Home size={18} color="#3525cd" />
             </View>
-            <Text className="text-lg font-bold text-dark-text">Yeni Mülk Ekle</Text>
+            <Text className="text-lg font-bold text-on-surface">Yeni Mülk Ekle</Text>
           </View>
           <TouchableOpacity onPress={() => router.back()}>
-            <X size={22} color="#94a3b8" />
+            <X size={22} color="#6b7280" />
           </TouchableOpacity>
         </View>
 
@@ -85,7 +85,7 @@ export default function AddPropertyModal() {
         >
           {/* Mülk Tipi */}
           <View className="gap-2">
-            <Text className="text-sm font-medium text-dark-subtext">Mülk Tipi</Text>
+            <Text className="text-sm font-medium text-surface-muted">Mülk Tipi</Text>
             <View className="flex-row flex-wrap gap-2">
               {PROPERTY_TYPES.map(type => (
                 <TouchableOpacity
@@ -94,11 +94,11 @@ export default function AddPropertyModal() {
                   className={`rounded-xl px-4 py-2 border ${
                     form.property_type === type.value
                       ? 'bg-brand-500 border-brand-500'
-                      : 'bg-surface-card border-surface-border'
+                      : 'bg-white border-surface-container'
                   }`}
                 >
                   <Text className={`text-sm font-medium ${
-                    form.property_type === type.value ? 'text-white' : 'text-dark-text'
+                    form.property_type === type.value ? 'text-white' : 'text-on-surface'
                   }`}>
                     {type.label}
                   </Text>
@@ -175,7 +175,7 @@ export default function AddPropertyModal() {
         </ScrollView>
 
         {/* Footer */}
-        <View className="px-5 py-4 border-t border-surface-border">
+        <View className="px-5 py-4 border-t border-surface-container">
           <Button
             title="Mülkü Kaydet"
             onPress={handleSubmit}

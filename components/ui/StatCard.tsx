@@ -27,12 +27,12 @@ export function StatCard({
   return (
     <Wrapper
       onPress={onPress}
-      className={`rounded-2xl bg-surface-card p-4 gap-3 ${className}`}
+      className={`rounded-xl bg-white border border-surface-container p-4 gap-3 ${className}`}
       activeOpacity={0.8}
     >
       {/* Header row */}
       <View className="flex-row items-center justify-between">
-        <View className="rounded-xl bg-brand/20 p-2">
+        <View className="rounded-xl bg-brand-500/10 p-2">
           {icon}
         </View>
         {trend && (
@@ -50,7 +50,7 @@ export function StatCard({
 
       {/* Value */}
       <View className="gap-0.5">
-        <Text className="text-2xl font-bold text-dark-text" numberOfLines={1}>
+        <Text className="text-2xl font-bold text-on-surface" numberOfLines={1}>
           {value}
         </Text>
         <Text className="text-sm text-surface-muted">{title}</Text>
