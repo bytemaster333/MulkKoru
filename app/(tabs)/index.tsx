@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import Svg, { Circle } from 'react-native-svg';
 import {
   Building2, Users, AlertTriangle, Bell, Settings,
-  TrendingUp, UserPlus, Sparkles,
+  TrendingUp, UserPlus, Sparkles, FileText, ChevronRight,
 } from 'lucide-react-native';
 import { StatCard } from '../../components/ui/StatCard';
 import { UpcomingPayments } from '../../components/dashboard/UpcomingPayments';
@@ -186,6 +186,26 @@ export default function DashboardScreen() {
                 </View>
               </TouchableOpacity>
             </View>
+
+            {/* ── Sözleşme Başlat ──────────────────────────── */}
+            <TouchableOpacity
+              onPress={() => router.push('/modals/add-contract')}
+              activeOpacity={0.85}
+              className="flex-row items-center gap-4 rounded-xl p-4 border"
+              style={{ backgroundColor: '#00533812', borderColor: '#00533830' }}
+            >
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{ backgroundColor: '#00533820' }}
+              >
+                <FileText size={20} color="#005338" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-on-surface font-bold text-sm">Sözleşme Başlat</Text>
+                <Text className="text-surface-muted text-xs">Mülk ve kiracıyı birbirine bağla</Text>
+              </View>
+              <ChevronRight size={18} color="#005338" />
+            </TouchableOpacity>
 
             {/* ── AI Denetimi Banner ────────────────────────── */}
             <View className="rounded-xl bg-white border border-surface-container p-4 gap-3">

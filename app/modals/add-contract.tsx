@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, Alert, TouchableOpacity,
-  KeyboardAvoidingView, Platform, Switch,
+  KeyboardAvoidingView, Platform, Switch, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { X, FileText, AlertTriangle, Info } from 'lucide-react-native';
+import { X, FileText, AlertTriangle, Info, ChevronDown, Check } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { contractService } from '../../services/contractService';
@@ -16,6 +16,119 @@ import { validateDepositAmount } from '../../utils/tufeCalculator';
 import { LEGAL } from '../../constants/legal';
 import type { ContractFormData, IncreaseBasis } from '../../types';
 
+// ── Picker bileşeni (bottom-sheet style, ek paket yok) ──────────────────────
+interface PickerItem { id: string; label: string; subtitle?: string }
+
+function PickerField({
+  label, placeholder, items, selectedId, onSelect, error,
+}: {
+  label: string;
+  placeholder: string;
+  items: PickerItem[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = items.find(i => i.id === selectedId);
+
+  return (
+    <View className="gap-1">
+      <Text className="text-sm font-medium text-on-surface">{label}</Text>
+      <TouchableOpacity
+        onPress={() => setOpen(true)}
+        className="flex-row items-center justify-between rounded-xl bg-white border px-4 py-3"
+        style={{ borderColor: error ? '#ba1a1a' : '#eaedff' }}
+      >
+        <View className="flex-1">
+          {selected ? (
+            <>
+              <Text className="text-on-surface text-sm font-medium">{selected.label}</Text>
+              {selected.subtitle && (
+                <Text className="text-xs text-surface-muted">{selected.subtitle}</Text>
+              )}
+            </>
+          ) : (
+            <Text className="text-surface-muted text-sm">{placeholder}</Text>
+          )}
+        </View>
+        <ChevronDown size={18} color="#6b7280" />
+      </TouchableOpacity>
+      {error && <Text className="text-xs text-error">{error}</Text>}
+
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setOpen(false)}
+        >
+          <TouchableOpacity activeOpacity={1}>
+            <View style={{ backgroundColor: '#faf8ff', borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
+              {/* Sheet header */}
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                paddingHorizontal: 20, paddingVertical: 16,
+                borderBottomWidth: 1, borderBottomColor: '#eaedff',
+              }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#131b2e' }}>{label} Seç</Text>
+                <TouchableOpacity onPress={() => setOpen(false)}>
+                  <X size={22} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+
+              {items.length === 0 ? (
+                <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                  <Text style={{ color: '#6b7280', fontSize: 14 }}>
+                    Henüz kayıt bulunmuyor
+                  </Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={items}
+                  keyExtractor={i => i.id}
+                  style={{ maxHeight: 320 }}
+                  contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 8 }}
+                  ItemSeparatorComponent={() => (
+                    <View style={{ height: 1, backgroundColor: '#eaedff' }} />
+                  )}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => { onSelect(item.id); setOpen(false); }}
+                      style={{
+                        paddingVertical: 14,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={{
+                          color: '#131b2e', fontSize: 15,
+                          fontWeight: item.id === selectedId ? '700' : '400',
+                        }}>
+                          {item.label}
+                        </Text>
+                        {item.subtitle && (
+                          <Text style={{ color: '#6b7280', fontSize: 12, marginTop: 1 }}>
+                            {item.subtitle}
+                          </Text>
+                        )}
+                      </View>
+                      {item.id === selectedId && <Check size={18} color="#3525cd" />}
+                    </TouchableOpacity>
+                  )}
+                />
+              )}
+              <View style={{ height: 20 }} />
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
+
+// ── Artış seçeneği ─────────────────────────────────────────────────────────
 const INCREASE_OPTIONS: Array<{ value: IncreaseBasis; label: string }> = [
   { value: 'TUFE',   label: 'TÜFE (Yasal)' },
   { value: 'FIXED',  label: 'Sabit Oran' },
@@ -29,6 +142,7 @@ const INITIAL: ContractFormData = {
   eviction_undertaking: false, eviction_undertaking_date: '', notes: '',
 };
 
+// ── Ana ekran ──────────────────────────────────────────────────────────────
 export default function AddContractModal() {
   const router              = useRouter();
   const { properties }      = useProperties();
@@ -37,6 +151,19 @@ export default function AddContractModal() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors]   = useState<Partial<Record<keyof ContractFormData, string>>>({});
   const [depositWarning, setDepositWarning] = useState<string | null>(null);
+
+  // Picker için item listelerini hazırla
+  const propertyItems: PickerItem[] = properties.map(p => ({
+    id:       p.id,
+    label:    p.title,
+    subtitle: `${p.city}${p.district ? ' · ' + p.district : ''} · ${p.rooms ?? ''}`,
+  }));
+
+  const tenantItems: PickerItem[] = tenants.map(t => ({
+    id:       t.id,
+    label:    t.full_name,
+    subtitle: t.phone ?? t.email ?? undefined,
+  }));
 
   function update<K extends keyof ContractFormData>(key: K, value: ContractFormData[K]) {
     setForm(f => {
@@ -58,9 +185,9 @@ export default function AddContractModal() {
 
   function validate(): boolean {
     const errs: typeof errors = {};
-    if (!form.property_id)           errs.property_id = 'Mülk seçiniz.';
-    if (!form.tenant_id)             errs.tenant_id   = 'Kiracı seçiniz.';
-    if (!form.start_date)            errs.start_date  = 'Başlangıç tarihi zorunludur.';
+    if (!form.property_id)                          errs.property_id = 'Mülk seçiniz.';
+    if (!form.tenant_id)                            errs.tenant_id   = 'Kiracı seçiniz.';
+    if (!form.start_date)                           errs.start_date  = 'Başlangıç tarihi zorunludur.';
     if (!validatePositiveAmount(form.monthly_rent)) errs.monthly_rent = 'Geçerli kira tutarı girin.';
     if (form.eviction_undertaking && form.eviction_undertaking_date) {
       const { valid, error } = validateEvictionUndertakingDate(form.start_date, form.eviction_undertaking_date);
@@ -108,57 +235,27 @@ export default function AddContractModal() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Mülk Seçimi */}
-          <View className="gap-2">
-            <Text className="text-sm font-medium text-surface-muted">Mülk *</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View className="flex-row gap-2">
-                {properties.map(p => (
-                  <TouchableOpacity
-                    key={p.id}
-                    onPress={() => update('property_id', p.id)}
-                    className={`rounded-xl px-4 py-2 border ${
-                      form.property_id === p.id
-                        ? 'bg-brand-500 border-brand-500'
-                        : 'bg-white border-surface-container'
-                    }`}
-                  >
-                    <Text className={`text-sm ${form.property_id === p.id ? 'text-white' : 'text-on-surface'}`}>
-                      {p.title}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-            {errors.property_id && <Text className="text-xs text-error">{errors.property_id}</Text>}
-          </View>
+          {/* ── Mülk Seçimi ───────────────────────── */}
+          <PickerField
+            label="Mülk *"
+            placeholder="Mülk seçiniz..."
+            items={propertyItems}
+            selectedId={form.property_id}
+            onSelect={id => update('property_id', id)}
+            error={errors.property_id}
+          />
 
-          {/* Kiracı Seçimi */}
-          <View className="gap-2">
-            <Text className="text-sm font-medium text-surface-muted">Kiracı *</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View className="flex-row gap-2">
-                {tenants.map(t => (
-                  <TouchableOpacity
-                    key={t.id}
-                    onPress={() => update('tenant_id', t.id)}
-                    className={`rounded-xl px-4 py-2 border ${
-                      form.tenant_id === t.id
-                        ? 'bg-brand-500 border-brand-500'
-                        : 'bg-white border-surface-container'
-                    }`}
-                  >
-                    <Text className={`text-sm ${form.tenant_id === t.id ? 'text-white' : 'text-on-surface'}`}>
-                      {t.full_name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-            {errors.tenant_id && <Text className="text-xs text-error">{errors.tenant_id}</Text>}
-          </View>
+          {/* ── Kiracı Seçimi ─────────────────────── */}
+          <PickerField
+            label="Kiracı *"
+            placeholder="Kiracı seçiniz..."
+            items={tenantItems}
+            selectedId={form.tenant_id}
+            onSelect={id => update('tenant_id', id)}
+            error={errors.tenant_id}
+          />
 
-          {/* Tarihler */}
+          {/* ── Tarihler ──────────────────────────── */}
           <View className="flex-row gap-3">
             <View className="flex-1">
               <Input
@@ -181,12 +278,12 @@ export default function AddContractModal() {
             </View>
           </View>
 
-          {/* Kira & Depozito */}
+          {/* ── Kira & Depozito ───────────────────── */}
           <View className="flex-row gap-3">
             <View className="flex-1">
               <Input
                 label="Aylık Kira (₺) *"
-                placeholder="15000"
+                placeholder="15.000"
                 keyboardType="numeric"
                 value={form.monthly_rent}
                 onChangeText={v => update('monthly_rent', v)}
@@ -196,7 +293,7 @@ export default function AddContractModal() {
             <View className="flex-1">
               <Input
                 label="Depozito (₺)"
-                placeholder="45000"
+                placeholder="45.000"
                 keyboardType="numeric"
                 value={form.deposit_amount}
                 onChangeText={v => update('deposit_amount', v)}
@@ -204,6 +301,7 @@ export default function AddContractModal() {
               />
             </View>
           </View>
+
           {depositWarning && (
             <View className="flex-row items-start gap-2 rounded-xl bg-warning/10 p-3 border border-warning/20">
               <AlertTriangle size={14} color="#f59e0b" />
@@ -211,22 +309,20 @@ export default function AddContractModal() {
             </View>
           )}
 
-          {/* Ödeme günü */}
-          <View className="flex-row gap-3">
-            <View className="flex-1">
-              <Input
-                label="Ödeme Günü"
-                placeholder="1"
-                keyboardType="numeric"
-                maxLength={2}
-                value={form.payment_day}
-                onChangeText={v => update('payment_day', v)}
-                hint="Her ayın kaçında?"
-              />
-            </View>
+          {/* ── Ödeme Günü ────────────────────────── */}
+          <View style={{ width: '48%' }}>
+            <Input
+              label="Ödeme Günü"
+              placeholder="1"
+              keyboardType="numeric"
+              maxLength={2}
+              value={form.payment_day}
+              onChangeText={v => update('payment_day', v)}
+              hint="Her ayın kaçında?"
+            />
           </View>
 
-          {/* Artış Bazı */}
+          {/* ── Artış Bazı ────────────────────────── */}
           <View className="gap-2">
             <Text className="text-sm font-medium text-surface-muted">Kira Artış Bazı</Text>
             <View className="flex-row gap-2">
@@ -234,7 +330,7 @@ export default function AddContractModal() {
                 <TouchableOpacity
                   key={opt.value}
                   onPress={() => update('increase_basis', opt.value)}
-                  className={`flex-1 rounded-xl py-2 items-center border ${
+                  className={`flex-1 rounded-xl py-2.5 items-center border ${
                     form.increase_basis === opt.value
                       ? 'bg-brand-500 border-brand-500'
                       : 'bg-white border-surface-container'
@@ -256,7 +352,7 @@ export default function AddContractModal() {
             </View>
           </View>
 
-          {/* Tahliye Taahhütnamesi */}
+          {/* ── Tahliye Taahhütnamesi ─────────────── */}
           <View className="rounded-xl bg-white border border-surface-container p-4 gap-3">
             <View className="flex-row items-center justify-between">
               <View className="flex-1 gap-0.5">
@@ -282,6 +378,7 @@ export default function AddContractModal() {
             )}
           </View>
 
+          {/* ── Notlar ────────────────────────────── */}
           <Input
             label="Notlar"
             placeholder="Eklemek istediğiniz özel şartlar..."
