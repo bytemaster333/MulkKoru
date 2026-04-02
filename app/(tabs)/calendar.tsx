@@ -1,9 +1,10 @@
 // Ödeme Takvimi — aylık görünüm, renk kodlu göstergeler
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon,
   CheckCircle, Clock, AlertCircle,
@@ -13,6 +14,7 @@ import { paymentService } from '../../services/paymentService';
 import { formatCurrency, formatDate, formatStatus } from '../../utils/formatters';
 import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { EmptyState } from '../../components/ui/EmptyState';
 import type { Payment, PaymentStatus } from '../../types';
 
 const STATUS_CONFIG: Record<PaymentStatus, {
@@ -52,6 +54,12 @@ export default function CalendarScreen() {
     if (month === 12) { setYear(y => y + 1); setMonth(1); }
     else               setMonth(m => m + 1);
   }
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   async function handleMarkPaid(payment: Payment) {
     await paymentService.markAsPaid(payment.id);
@@ -122,14 +130,11 @@ export default function CalendarScreen() {
             />
           }
           ListEmptyComponent={
-            <View className="items-center py-16 gap-3">
-              <View className="w-16 h-16 rounded-full bg-surface-container items-center justify-center">
-                <CalendarIcon size={32} color="#6b7280" />
-              </View>
-              <Text className="text-surface-muted text-sm text-center">
-                Bu ay için ödeme kaydı bulunmuyor.
-              </Text>
-            </View>
+            <EmptyState
+              icon={<CalendarIcon size={32} color="#6b7280" />}
+              title="Ödeme Kaydı Yok"
+              description="Bu ay için henüz ödeme kaydı bulunmuyor. Sözleşme eklediğinizde ödemeler otomatik oluşturulur."
+            />
           }
           renderItem={({ item }: { item: Payment }) => {
             const config      = STATUS_CONFIG[item.status];

@@ -3,6 +3,7 @@ import React, { useCallback } from 'react';
 import {
   View, Text, ScrollView, RefreshControl, TouchableOpacity,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Svg, { Circle } from 'react-native-svg';
@@ -86,6 +87,13 @@ export default function DashboardScreen() {
   const onRefresh = useCallback(async () => {
     await Promise.all([refetchStats(), refetchPayments()]);
   }, [refetchStats, refetchPayments]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchStats();
+      refetchPayments();
+    }, [refetchStats, refetchPayments]),
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-surface">

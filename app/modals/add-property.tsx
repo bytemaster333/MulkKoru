@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import {
   View, Text, ScrollView, Alert, TouchableOpacity, KeyboardAvoidingView, Platform,
 } from 'react-native';
+
+const CITIES = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Diğer'];
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X, Home } from 'lucide-react-native';
@@ -123,25 +125,36 @@ export default function AddPropertyModal() {
             multiline
             numberOfLines={2}
           />
-          <View className="flex-row gap-3">
-            <View className="flex-1">
-              <Input
-                label="Şehir *"
-                placeholder="İstanbul"
-                value={form.city}
-                onChangeText={v => update('city', v)}
-                error={errors.city}
-              />
+          {/* Şehir Seçimi */}
+          <View className="gap-2">
+            <Text className="text-sm font-medium text-surface-muted">Şehir *</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {CITIES.map(city => (
+                <TouchableOpacity
+                  key={city}
+                  onPress={() => update('city', city)}
+                  className={`rounded-xl px-4 py-2 border ${
+                    form.city === city
+                      ? 'bg-brand-500 border-brand-500'
+                      : 'bg-white border-surface-container'
+                  }`}
+                >
+                  <Text className={`text-sm font-medium ${
+                    form.city === city ? 'text-white' : 'text-on-surface'
+                  }`}>
+                    {city}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <View className="flex-1">
-              <Input
-                label="İlçe"
-                placeholder="Kadıköy"
-                value={form.district}
-                onChangeText={v => update('district', v)}
-              />
-            </View>
+            {errors.city && <Text className="text-xs text-error">{errors.city}</Text>}
           </View>
+          <Input
+            label="İlçe"
+            placeholder="Kadıköy"
+            value={form.district}
+            onChangeText={v => update('district', v)}
+          />
           <View className="flex-row gap-3">
             <View className="flex-1">
               <Input

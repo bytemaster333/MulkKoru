@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { X, FileText, AlertTriangle, Info, ChevronDown, Check } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { DatePickerField } from '../../components/ui/DatePickerField';
 import { contractService } from '../../services/contractService';
 import { useProperties } from '../../hooks/useProperties';
 import { useTenants } from '../../hooks/useTenants';
@@ -258,21 +259,18 @@ export default function AddContractModal() {
           {/* ── Tarihler ──────────────────────────── */}
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Input
+              <DatePickerField
                 label="Başlangıç Tarihi *"
-                placeholder="2024-01-01"
                 value={form.start_date}
-                onChangeText={v => update('start_date', v)}
+                onChange={v => update('start_date', v)}
                 error={errors.start_date}
-                hint="YYYY-AA-GG"
               />
             </View>
             <View className="flex-1">
-              <Input
+              <DatePickerField
                 label="Bitiş Tarihi"
-                placeholder="2025-01-01"
                 value={form.end_date}
-                onChangeText={v => update('end_date', v)}
+                onChange={v => update('end_date', v)}
                 hint="Boş = açık süreli"
               />
             </View>
@@ -367,11 +365,10 @@ export default function AddContractModal() {
               />
             </View>
             {form.eviction_undertaking && (
-              <Input
+              <DatePickerField
                 label="Taahhütname İmza Tarihi"
-                placeholder="2024-01-15"
                 value={form.eviction_undertaking_date}
-                onChangeText={v => update('eviction_undertaking_date', v)}
+                onChange={v => update('eviction_undertaking_date', v)}
                 error={errors.eviction_undertaking_date}
                 hint="Kira başlangıcından sonra olmalıdır."
               />
