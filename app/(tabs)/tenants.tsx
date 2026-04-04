@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   TextInput, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Plus, Search, Users } from 'lucide-react-native';
 import { TenantCard } from '../../components/tenant/TenantCard';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -16,6 +17,12 @@ export default function TenantsScreen() {
   const router                    = useRouter();
   const { tenants, loading, refetch } = useTenants();
   const [query, setQuery]         = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const filtered = tenants.filter(t =>
     t.full_name.toLowerCase().includes(query.toLowerCase()) ||

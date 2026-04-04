@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   TextInput, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Plus, Search, Building2 } from 'lucide-react-native';
 import { PropertyCard } from '../../components/property/PropertyCard';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -16,6 +17,12 @@ export default function PropertiesScreen() {
   const router                    = useRouter();
   const { properties, loading, refetch } = useProperties();
   const [query, setQuery]         = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const filtered = properties.filter(p =>
     p.title.toLowerCase().includes(query.toLowerCase()) ||
