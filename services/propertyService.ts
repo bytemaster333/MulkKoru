@@ -1,14 +1,33 @@
 import { supabase } from './supabase';
-import type { Property, PropertyFormData } from '../types';
+import type { Property, PropertyFormData, Contract } from '../types';
+
+// Sözleşme alanları — list sorgusunda JOIN için minimal set
+const CONTRACT_SELECT = `
+  id, status, monthly_rent, payment_day, increase_basis, increase_rate,
+  deposit_amount, start_date, end_date, currency, eviction_undertaking,
+  eviction_undertaking_date, notes, created_at, updated_at,
+  property_id, tenant_id, owner_id,
+  tenants(id, full_name, phone)
+`.trim();
 
 export const propertyService = {
   async getAll(): Promise<Property[]> {
     const { data, error } = await supabase
       .from('properties')
-      .select('*')
+      .select(`*, contracts(${CONTRACT_SELECT})`)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data ?? [];
+
+    return (data ?? []).map(row => {
+      const allContracts = ((row as Record<string, unknown>).contracts ?? []) as Contract[];
+      const activeContract = allContracts.find(c => c.status === 'active');
+      const { contracts: _c, ...rest } = row as Record<string, unknown>;
+      return {
+        ...rest,
+        active_contract: activeContract ?? undefined,
+        monthly_rent: activeContract?.monthly_rent ?? (rest.monthly_rent as number | undefined),
+      } as unknown as Property;
+    });
   },
 
   async getById(id: string): Promise<Property | null> {

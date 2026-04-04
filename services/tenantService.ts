@@ -5,7 +5,27 @@
 
 import { supabase } from './supabase';
 import { maskTCKimlikNo } from '../utils/validators';
-import type { Tenant, TenantFormData } from '../types';
+import type { Tenant, TenantFormData, Contract } from '../types';
+
+// Sözleşme alanları — JOIN için minimal set
+const CONTRACT_SELECT = `
+  id, status, monthly_rent, payment_day, increase_basis, increase_rate,
+  deposit_amount, start_date, end_date, currency, eviction_undertaking,
+  eviction_undertaking_date, notes, created_at, updated_at,
+  property_id, tenant_id, owner_id,
+  properties(id, title, city, district)
+`.trim();
+
+function withActiveContract(row: Record<string, unknown>): Tenant {
+  const allContracts = (row.contracts ?? []) as Contract[];
+  const activeContract = allContracts.find(c => c.status === 'active');
+  const { contracts: _c, tc_no: _tc, ...rest } = row;
+  return {
+    ...rest,
+    tc_no_masked: rest.tc_no_masked as string | undefined,
+    active_contract: activeContract ?? undefined,
+  } as unknown as Tenant;
+}
 
 // KVKK: TC No'yu şifrele (production'da gerçek şifreleme kullanın)
 function encryptTC(tcNo: string): string {
@@ -18,21 +38,21 @@ export const tenantService = {
   async getAll(): Promise<Tenant[]> {
     const { data, error } = await supabase
       .from('tenants')
-      .select('*')
+      .select(`*, contracts(${CONTRACT_SELECT})`)
       .order('full_name');
     if (error) throw error;
-    // TC No maskelenerek döndürülür
-    return (data ?? []).map(t => ({ ...t, tc_no: undefined, tc_no_masked: t.tc_no_masked }));
+    return (data ?? []).map(row => withActiveContract(row as Record<string, unknown>));
   },
 
   async getById(id: string): Promise<Tenant | null> {
     const { data, error } = await supabase
       .from('tenants')
-      .select('*')
+      .select(`*, contracts(${CONTRACT_SELECT})`)
       .eq('id', id)
       .single();
     if (error) throw error;
-    return data;
+    if (!data) return null;
+    return withActiveContract(data as Record<string, unknown>);
   },
 
   async create(form: TenantFormData): Promise<Tenant> {

@@ -183,19 +183,31 @@ export default function PropertyDetailModal() {
             )}
           </View>
         ) : (
-          <View className="rounded-xl bg-white border border-surface-container p-5 items-center gap-3">
-            <View className="w-12 h-12 rounded-full bg-surface-container items-center justify-center">
-              <FileText size={24} color="#6b7280" />
+          <View
+            className="rounded-xl border p-5 items-center gap-4"
+            style={{ backgroundColor: '#3525cd08', borderColor: '#3525cd30' }}
+          >
+            <View
+              className="w-16 h-16 rounded-full items-center justify-center"
+              style={{ backgroundColor: '#3525cd15' }}
+            >
+              <FileText size={28} color="#3525cd" />
             </View>
-            <Text className="text-sm text-surface-muted text-center">
-              Bu mülk için henüz aktif sözleşme bulunmuyor.
-            </Text>
+            <View className="items-center gap-1">
+              <Text className="text-base font-bold text-on-surface text-center">
+                Bu mülk henüz kiralanmamış
+              </Text>
+              <Text className="text-sm text-surface-muted text-center leading-5">
+                Kiracı atayarak aylık kira takibini ve ödeme takvimini otomatik başlatın.
+              </Text>
+            </View>
             <TouchableOpacity
               onPress={() => router.push('/modals/add-contract')}
-              className="flex-row items-center gap-2 bg-brand-500 rounded-xl px-4 py-2.5"
+              className="flex-row items-center gap-2 rounded-xl px-5 py-3"
+              style={{ backgroundColor: '#3525cd' }}
             >
               <FileText size={16} color="#ffffff" />
-              <Text className="text-white text-sm font-semibold">Sözleşme Başlat</Text>
+              <Text className="text-white text-sm font-bold">Sözleşme Başlat</Text>
             </TouchableOpacity>
           </View>
         )}
