@@ -45,6 +45,14 @@ export default function RootLayout() {
           name="modals/add-contract"
           options={{ presentation: 'modal', headerShown: false }}
         />
+        <Stack.Screen
+          name="modals/property-detail"
+          options={{ presentation: 'modal', headerShown: false }}
+        />
+        <Stack.Screen
+          name="modals/tenant-detail"
+          options={{ presentation: 'modal', headerShown: false }}
+        />
       </Stack>
     </>
   );
