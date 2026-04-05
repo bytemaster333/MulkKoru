@@ -15,7 +15,7 @@ const VARIANT_STYLES: Record<BadgeVariant, string> = {
   danger:  'bg-danger/20 text-danger',
   info:    'bg-info/20 text-info',
   brand:   'bg-brand/20 text-brand-200',
-  neutral: 'bg-surface-border text-surface-muted',
+  neutral: 'bg-surface-container text-on-surface',
 };
 
 export function Badge({ label, variant = 'neutral', size = 'sm' }: BadgeProps) {

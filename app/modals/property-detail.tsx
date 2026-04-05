@@ -3,10 +3,11 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
-  X, Home, MapPin, Ruler, Building, DoorOpen, FileText,
-  ChevronRight, Car, ArrowUpDown, Fence, Sofa, Wifi, Flame, Heater,
+  X, Home, FileText, Car, ArrowUpDown, Fence, Sofa, Wifi, Flame, Heater,
+  Pencil, Trash2, CircleStop,
 } from 'lucide-react-native';
 import { propertyService } from '../../services/propertyService';
+import { contractService } from '../../services/contractService';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Badge } from '../../components/ui/Badge';
 import {
@@ -46,9 +47,11 @@ export default function PropertyDetailModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
+  function loadProperty() {
     if (!id) return;
+    setLoading(true);
     propertyService
       .getById(id)
       .then(setProperty)
@@ -57,7 +60,72 @@ export default function PropertyDetailModal() {
         router.back();
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }
+
+  useEffect(() => { loadProperty(); }, [id]);
+
+  function handleEdit() {
+    router.push(`/modals/add-property?id=${id}`);
+  }
+
+  function handleDelete() {
+    if (activeContract) {
+      Alert.alert(
+        'Silinemez',
+        'Aktif sözleşmesi olan bir mülk silinemez. Önce sözleşmeyi sonlandırın.',
+        [{ text: 'Tamam' }],
+      );
+      return;
+    }
+    Alert.alert(
+      'Mülkü Sil',
+      `"${property?.title}" mülkü kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`,
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              await propertyService.delete(id);
+              router.back();
+            } catch (e: unknown) {
+              Alert.alert('Hata', e instanceof Error ? e.message : 'Mülk silinemedi.');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  function handleTerminate() {
+    if (!activeContract) return;
+    Alert.alert(
+      'Sözleşmeyi Sonlandır',
+      'Bu sözleşme sonlandırılsın mı? Mevcut ödeme kayıtları etkilenmez.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sonlandır',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              await contractService.updateStatus(activeContract.id, 'terminated');
+              loadProperty();
+            } catch (e: unknown) {
+              Alert.alert('Hata', e instanceof Error ? e.message : 'Sözleşme sonlandırılamadı.');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  }
 
   if (loading) {
     return (
@@ -89,11 +157,23 @@ export default function PropertyDetailModal() {
             {property.title}
           </Text>
         </View>
-        <View className="flex-row items-center gap-3">
+        <View className="flex-row items-center gap-2">
           <Badge
             label={hasContract ? 'Kirada' : 'Boş'}
             variant={hasContract ? 'success' : 'neutral'}
           />
+          <TouchableOpacity
+            onPress={handleEdit}
+            className="w-8 h-8 rounded-xl bg-brand-500/10 items-center justify-center"
+          >
+            <Pencil size={15} color="#3525cd" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleDelete}
+            className="w-8 h-8 rounded-xl bg-danger/10 items-center justify-center"
+          >
+            <Trash2 size={15} color="#ef4444" />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => router.back()}>
             <X size={22} color="#6b7280" />
           </TouchableOpacity>
@@ -164,7 +244,17 @@ export default function PropertyDetailModal() {
         {/* Aktif Sözleşme */}
         {activeContract ? (
           <View className="rounded-xl bg-white border border-surface-container p-4">
-            <Text className="text-sm font-bold text-on-surface mb-2">Aktif Sözleşme</Text>
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-sm font-bold text-on-surface">Aktif Sözleşme</Text>
+              <TouchableOpacity
+                onPress={handleTerminate}
+                disabled={actionLoading}
+                className="flex-row items-center gap-1.5 rounded-xl bg-danger/10 px-3 py-1.5"
+              >
+                <CircleStop size={13} color="#ef4444" />
+                <Text className="text-xs font-semibold text-danger">Sonlandır</Text>
+              </TouchableOpacity>
+            </View>
             {activeContract.tenant && (
               <InfoRow
                 label="Kiracı"

@@ -4,9 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   X, User, Phone, Mail, Shield, AlertTriangle, FileText,
-  Calendar, Home, MapPin, TrendingUp,
+  Calendar, Home, MapPin, TrendingUp, Pencil, Trash2, CircleStop,
 } from 'lucide-react-native';
 import { tenantService } from '../../services/tenantService';
+import { contractService } from '../../services/contractService';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Badge } from '../../components/ui/Badge';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -31,9 +32,11 @@ export default function TenantDetailModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
+  function loadTenant() {
     if (!id) return;
+    setLoading(true);
     tenantService
       .getById(id)
       .then(setTenant)
@@ -42,7 +45,72 @@ export default function TenantDetailModal() {
         router.back();
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }
+
+  useEffect(() => { loadTenant(); }, [id]);
+
+  function handleEdit() {
+    router.push(`/modals/add-tenant?id=${id}`);
+  }
+
+  function handleDelete() {
+    if (tenant?.active_contract) {
+      Alert.alert(
+        'Silinemez',
+        'Aktif sözleşmesi olan bir kiracı silinemez. Önce sözleşmeyi sonlandırın.',
+        [{ text: 'Tamam' }],
+      );
+      return;
+    }
+    Alert.alert(
+      'Kiracıyı Sil',
+      `"${tenant?.full_name}" kiracısı kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`,
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              await tenantService.delete(id);
+              router.back();
+            } catch (e: unknown) {
+              Alert.alert('Hata', e instanceof Error ? e.message : 'Kiracı silinemedi.');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  function handleTerminate() {
+    if (!tenant?.active_contract) return;
+    Alert.alert(
+      'Sözleşmeyi Sonlandır',
+      'Bu sözleşme sonlandırılsın mı? Mevcut ödeme kayıtları etkilenmez.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sonlandır',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              await contractService.updateStatus(tenant.active_contract!.id, 'terminated');
+              loadTenant();
+            } catch (e: unknown) {
+              Alert.alert('Hata', e instanceof Error ? e.message : 'Sözleşme sonlandırılamadı.');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  }
 
   if (loading) {
     return (
@@ -74,11 +142,23 @@ export default function TenantDetailModal() {
             </Text>
           </View>
         </View>
-        <View className="flex-row items-center gap-3">
+        <View className="flex-row items-center gap-2">
           <Badge
             label={hasActive ? 'Aktif' : 'Pasif'}
             variant={hasActive ? 'success' : 'neutral'}
           />
+          <TouchableOpacity
+            onPress={handleEdit}
+            className="w-8 h-8 rounded-xl bg-brand-500/10 items-center justify-center"
+          >
+            <Pencil size={15} color="#3525cd" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleDelete}
+            className="w-8 h-8 rounded-xl bg-danger/10 items-center justify-center"
+          >
+            <Trash2 size={15} color="#ef4444" />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => router.back()}>
             <X size={22} color="#6b7280" />
           </TouchableOpacity>
@@ -101,8 +181,18 @@ export default function TenantDetailModal() {
                 </View>
                 <Text className="text-white/80 text-xs font-medium">Kiralık Mülk</Text>
               </View>
-              <View className="rounded-full bg-white/20 px-3 py-1">
-                <Text className="text-white text-xs font-bold">Aktif Sözleşme</Text>
+              <View className="flex-row items-center gap-2">
+                <View className="rounded-full bg-white/20 px-3 py-1">
+                  <Text className="text-white text-xs font-bold">Aktif Sözleşme</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={handleTerminate}
+                  disabled={actionLoading}
+                  className="flex-row items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1"
+                >
+                  <CircleStop size={12} color="#fca5a5" />
+                  <Text className="text-red-200 text-xs font-semibold">Sonlandır</Text>
+                </TouchableOpacity>
               </View>
             </View>
 

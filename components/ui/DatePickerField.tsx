@@ -77,7 +77,7 @@ export function DatePickerField({ label, value, onChange, error, hint }: DatePic
           >
             <TouchableOpacity activeOpacity={1}>
               <View style={{
-                backgroundColor: '#faf8ff',
+                backgroundColor: '#ffffff',
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 paddingBottom: 24,
@@ -99,7 +99,7 @@ export function DatePickerField({ label, value, onChange, error, hint }: DatePic
                   display="spinner"
                   onChange={handleChange}
                   locale="tr-TR"
-                  style={{ backgroundColor: '#faf8ff' }}
+                  style={{ backgroundColor: '#ffffff' }}
                 />
               </View>
             </TouchableOpacity>

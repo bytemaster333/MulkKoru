@@ -97,7 +97,7 @@ async function generatePayments(
   paymentDay: number,
 ): Promise<void> {
   const start = new Date(startDate);
-  const end   = endDate ? new Date(endDate) : new Date(start.getFullYear() + 1, start.getMonth(), start.getDate());
+  const end   = endDate ? new Date(endDate) : new Date(start.getFullYear() + 2, start.getMonth(), start.getDate());
 
   const payments: Array<{ contract_id: string; due_date: string; amount: number; status: string }> = [];
   const cursor = new Date(start.getFullYear(), start.getMonth(), paymentDay);

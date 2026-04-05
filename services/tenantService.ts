@@ -17,8 +17,11 @@ const CONTRACT_SELECT = `
 `.trim();
 
 function withActiveContract(row: Record<string, unknown>): Tenant {
+  const today = new Date().toISOString().split('T')[0];
   const allContracts = (row.contracts ?? []) as Contract[];
-  const activeContract = allContracts.find(c => c.status === 'active');
+  const activeContract = allContracts.find(
+    c => c.status === 'active' && (!c.end_date || c.end_date >= today),
+  );
   const { contracts: _c, tc_no: _tc, ...rest } = row;
   return {
     ...rest,

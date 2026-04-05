@@ -18,9 +18,12 @@ export const propertyService = {
       .order('created_at', { ascending: false });
     if (error) throw error;
 
+    const today = new Date().toISOString().split('T')[0];
     return (data ?? []).map(row => {
       const allContracts = ((row as Record<string, unknown>).contracts ?? []) as Contract[];
-      const activeContract = allContracts.find(c => c.status === 'active');
+      const activeContract = allContracts.find(
+        c => c.status === 'active' && (!c.end_date || c.end_date >= today),
+      );
       const { contracts: _c, ...rest } = row as Record<string, unknown>;
       return {
         ...rest,

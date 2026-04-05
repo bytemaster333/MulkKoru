@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View, Text, ScrollView, Alert, TouchableOpacity,
   KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   X, User, Phone, Mail, Shield, Info, Home, AlertCircle,
 } from 'lucide-react-native';
@@ -12,6 +12,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { PickerField } from '../../components/ui/PickerField';
 import { DatePickerField } from '../../components/ui/DatePickerField';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { tenantService } from '../../services/tenantService';
 import { contractService } from '../../services/contractService';
 import { useProperties } from '../../hooks/useProperties';
@@ -32,20 +33,49 @@ const INITIAL: TenantFormData = {
 
 export default function AddTenantModal() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const isEdit = !!id;
+
   const { properties, loading: propertiesLoading } = useProperties();
 
   const [form, setForm]     = useState<TenantFormData>(INITIAL);
   const [loading, setLoading] = useState(false);
+  const [prefilling, setPrefilling] = useState(isEdit);
   const [errors, setErrors]   = useState<Partial<Record<keyof TenantFormData, string>>>({});
   const [rentError, setRentError] = useState<string | undefined>();
   const [showEmergency, setShowEmergency] = useState(false);
 
-  // Bağlanacak mülk (opsiyonel)
+  // Bağlanacak mülk (opsiyonel — yalnızca yeni kiracı ekleme modunda)
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const [monthlyRent, setMonthlyRent]               = useState('');
   const [startDate, setStartDate]                   = useState(todayISO());
 
-  // Sadece 'Boş' mülkler
+  // Prefill için mevcut kiracıyı yükle
+  useEffect(() => {
+    if (!id) return;
+    tenantService
+      .getById(id)
+      .then(t => {
+        if (!t) return;
+        setForm({
+          full_name:           t.full_name,
+          tc_no:               '', // KVKK: ham TC saklanmıyor
+          phone:               t.phone ?? '',
+          email:               t.email ?? '',
+          emergency_name:      t.emergency_contact?.name ?? '',
+          emergency_phone:     t.emergency_contact?.phone ?? '',
+          emergency_relation:  t.emergency_contact?.relation ?? '',
+        });
+        if (t.emergency_contact?.name) setShowEmergency(true);
+      })
+      .catch(err => {
+        Alert.alert('Hata', err instanceof Error ? err.message : 'Kiracı yüklenemedi.');
+        router.back();
+      })
+      .finally(() => setPrefilling(false));
+  }, [id]);
+
+  // Sadece 'Boş' mülkler (edit modda mülk seçimi gösterilmez)
   const emptyProperties = useMemo(
     () => properties.filter(p => !p.active_contract),
     [properties],
@@ -62,9 +92,9 @@ export default function AddTenantModal() {
     [emptyProperties, selectedPropertyId],
   );
 
-  function handlePropertySelect(id: string) {
-    setSelectedPropertyId(id);
-    const prop = emptyProperties.find(p => p.id === id);
+  function handlePropertySelect(propId: string) {
+    setSelectedPropertyId(propId);
+    const prop = emptyProperties.find(p => p.id === propId);
     if (prop?.monthly_rent) {
       setMonthlyRent(String(prop.monthly_rent));
     }
@@ -90,7 +120,7 @@ export default function AddTenantModal() {
     }
 
     let rentErr: string | undefined;
-    if (selectedPropertyId && !validatePositiveAmount(monthlyRent)) {
+    if (!isEdit && selectedPropertyId && !validatePositiveAmount(monthlyRent)) {
       rentErr = 'Mülk seçildiyse geçerli bir kira tutarı zorunludur.';
     }
 
@@ -103,33 +133,53 @@ export default function AddTenantModal() {
     if (!validate()) return;
     try {
       setLoading(true);
-      const tenant = await tenantService.create(form);
 
-      if (selectedPropertyId && monthlyRent && startDate) {
-        await contractService.create({
-          property_id:              selectedPropertyId,
-          tenant_id:                tenant.id,
-          start_date:               startDate,
-          end_date:                 '',
-          monthly_rent:             monthlyRent,
-          deposit_amount:           '',
-          payment_day:              '1',
-          increase_basis:           'TUFE',
-          increase_rate:            '',
-          eviction_undertaking:     false,
-          eviction_undertaking_date: '',
-          notes:                    '',
-        });
+      if (isEdit && id) {
+        await tenantService.update(id, form);
+      } else {
+        const tenant = await tenantService.create(form);
+
+        if (selectedPropertyId && monthlyRent && startDate) {
+          try {
+            await contractService.create({
+              property_id:              selectedPropertyId,
+              tenant_id:                tenant.id,
+              start_date:               startDate,
+              end_date:                 '',
+              monthly_rent:             monthlyRent,
+              deposit_amount:           '',
+              payment_day:              '1',
+              increase_basis:           'TUFE',
+              increase_rate:            '',
+              eviction_undertaking:     false,
+              eviction_undertaking_date: '',
+              notes:                    '',
+            });
+          } catch (contractErr) {
+            // Rollback: sözleşme başarısız → kiracıyı da sil
+            await tenantService.delete(tenant.id).catch(() => null);
+            throw contractErr;
+          }
+        }
       }
+
       router.back();
     } catch (e: unknown) {
-      Alert.alert('Hata', e instanceof Error ? e.message : 'Kiracı eklenemedi.');
+      Alert.alert('Hata', e instanceof Error ? e.message : isEdit ? 'Kiracı güncellenemedi.' : 'Kiracı eklenemedi.');
     } finally {
       setLoading(false);
     }
   }
 
-  const hasProperty = !!selectedPropertyId;
+  const hasProperty = !isEdit && !!selectedPropertyId;
+
+  if (prefilling) {
+    return (
+      <SafeAreaView className="flex-1 bg-surface">
+        <LoadingSpinner message="Kiracı bilgileri yükleniyor..." />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -143,7 +193,9 @@ export default function AddTenantModal() {
             <View className="rounded-xl bg-brand-500/10 p-2">
               <User size={18} color="#3525cd" />
             </View>
-            <Text className="text-lg font-bold text-on-surface">Yeni Kiracı Ekle</Text>
+            <Text className="text-lg font-bold text-on-surface">
+              {isEdit ? 'Kiracıyı Düzenle' : 'Yeni Kiracı Ekle'}
+            </Text>
           </View>
           <TouchableOpacity onPress={() => router.back()}>
             <X size={22} color="#6b7280" />
@@ -156,59 +208,61 @@ export default function AddTenantModal() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Bağlanacak Mülk ──────────────────────── */}
-          <View className="gap-3">
-            <View className="flex-row items-center gap-2">
-              <Home size={16} color="#3525cd" />
-              <Text className="text-sm font-bold text-on-surface">Hangi Mülk İçin?</Text>
-              <Text className="text-xs text-surface-muted">(Opsiyonel)</Text>
-            </View>
-
-            {!propertiesLoading && emptyProperties.length === 0 ? (
-              <View className="flex-row items-start gap-2 rounded-xl border p-3"
-                style={{ backgroundColor: '#f59e0b12', borderColor: '#f59e0b30' }}>
-                <AlertCircle size={15} color="#f59e0b" />
-                <Text className="text-xs text-on-surface flex-1 leading-4">
-                  Şu an boşta mülkünüz bulunmuyor. Kiracıyı mülksüz ekleyebilir, daha sonra sözleşme oluşturabilirsiniz.
-                </Text>
+          {/* ── Bağlanacak Mülk (yalnızca yeni kiracı modunda) ── */}
+          {!isEdit && (
+            <View className="gap-3">
+              <View className="flex-row items-center gap-2">
+                <Home size={16} color="#3525cd" />
+                <Text className="text-sm font-bold text-on-surface">Hangi Mülk İçin?</Text>
+                <Text className="text-xs text-surface-muted">(Opsiyonel)</Text>
               </View>
-            ) : (
-              <PickerField
-                label="Bağlanacak Mülk"
-                placeholder="Seçmek için dokunun (opsiyonel)"
-                items={propertyItems}
-                selectedId={selectedPropertyId}
-                onSelect={handlePropertySelect}
-                emptyMessage="Boşta mülk bulunamadı"
-              />
-            )}
 
-            {/* Seçili mülk için kira + tarih */}
-            {hasProperty && (
-              <View className="rounded-xl border border-brand-100 p-4 gap-3"
-                style={{ backgroundColor: '#3525cd08' }}>
-                <View className="flex-row items-center gap-1.5">
-                  <View className="w-2 h-2 rounded-full bg-brand-500" />
-                  <Text className="text-xs font-semibold text-brand-500">
-                    {selectedProperty?.title} için sözleşme oluşturulacak
+              {!propertiesLoading && emptyProperties.length === 0 ? (
+                <View className="flex-row items-start gap-2 rounded-xl border p-3"
+                  style={{ backgroundColor: '#f59e0b12', borderColor: '#f59e0b30' }}>
+                  <AlertCircle size={15} color="#f59e0b" />
+                  <Text className="text-xs text-on-surface flex-1 leading-4">
+                    Şu an boşta mülkünüz bulunmuyor. Kiracıyı mülksüz ekleyebilir, daha sonra sözleşme oluşturabilirsiniz.
                   </Text>
                 </View>
-                <Input
-                  label="Aylık Kira (₺) *"
-                  placeholder="15.000"
-                  keyboardType="numeric"
-                  value={monthlyRent}
-                  onChangeText={v => { setMonthlyRent(v); setRentError(undefined); }}
-                  error={rentError}
+              ) : (
+                <PickerField
+                  label="Bağlanacak Mülk"
+                  placeholder="Seçmek için dokunun (opsiyonel)"
+                  items={propertyItems}
+                  selectedId={selectedPropertyId}
+                  onSelect={handlePropertySelect}
+                  emptyMessage="Boşta mülk bulunamadı"
                 />
-                <DatePickerField
-                  label="Sözleşme Başlangıç Tarihi"
-                  value={startDate}
-                  onChange={setStartDate}
-                />
-              </View>
-            )}
-          </View>
+              )}
+
+              {/* Seçili mülk için kira + tarih */}
+              {hasProperty && (
+                <View className="rounded-xl border border-brand-100 p-4 gap-3"
+                  style={{ backgroundColor: '#3525cd08' }}>
+                  <View className="flex-row items-center gap-1.5">
+                    <View className="w-2 h-2 rounded-full bg-brand-500" />
+                    <Text className="text-xs font-semibold text-brand-500">
+                      {selectedProperty?.title} için sözleşme oluşturulacak
+                    </Text>
+                  </View>
+                  <Input
+                    label="Aylık Kira (₺) *"
+                    placeholder="15.000"
+                    keyboardType="numeric"
+                    value={monthlyRent}
+                    onChangeText={v => { setMonthlyRent(v); setRentError(undefined); }}
+                    error={rentError}
+                  />
+                  <DatePickerField
+                    label="Sözleşme Başlangıç Tarihi"
+                    value={startDate}
+                    onChange={setStartDate}
+                  />
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Ayraç */}
           <View className="flex-row items-center gap-3">
@@ -237,7 +291,7 @@ export default function AddTenantModal() {
           />
           <Input
             label="TC Kimlik No"
-            placeholder="12345678901"
+            placeholder={isEdit ? '(değiştirmek için girin)' : '12345678901'}
             keyboardType="numeric"
             maxLength={11}
             value={form.tc_no}
@@ -320,7 +374,7 @@ export default function AddTenantModal() {
             </Text>
           )}
           <Button
-            title={hasProperty ? 'Kiracıyı Kaydet ve Sözleşme Oluştur' : 'Kiracıyı Kaydet'}
+            title={isEdit ? 'Değişiklikleri Kaydet' : hasProperty ? 'Kiracıyı Kaydet ve Sözleşme Oluştur' : 'Kiracıyı Kaydet'}
             onPress={handleSubmit}
             loading={loading}
             size="lg"

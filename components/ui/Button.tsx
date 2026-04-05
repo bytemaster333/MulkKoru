@@ -47,7 +47,10 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator size="small" color="#ffffff" />
+        <ActivityIndicator
+          size="small"
+          color={variant === 'primary' || variant === 'secondary' || variant === 'danger' ? '#ffffff' : '#3525cd'}
+        />
       ) : (
         <>
           {icon}
