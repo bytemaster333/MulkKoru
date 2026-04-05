@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, Alert, TouchableOpacity, KeyboardAvoidingView, Platform,
 } from 'react-native';
 
 const CITIES = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Diğer'];
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { X, Home } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { propertyService } from '../../services/propertyService';
 import { validatePositiveAmount, validateRoomFormat } from '../../utils/validators';
 import type { PropertyType, PropertyFormData } from '../../types';
@@ -26,10 +27,39 @@ const INITIAL: PropertyFormData = {
 };
 
 export default function AddPropertyModal() {
-  const router          = useRouter();
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const isEdit = !!id;
+
   const [form, setForm] = useState<PropertyFormData>(INITIAL);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors]   = useState<Partial<Record<keyof PropertyFormData, string>>>({});
+  const [prefilling, setPrefilling] = useState(isEdit);
+  const [errors, setErrors] = useState<Partial<Record<keyof PropertyFormData, string>>>({});
+
+  useEffect(() => {
+    if (!id) return;
+    propertyService
+      .getById(id)
+      .then(p => {
+        if (!p) return;
+        setForm({
+          title:         p.title,
+          address:       p.address,
+          city:          p.city,
+          district:      p.district ?? '',
+          property_type: p.property_type,
+          area_sqm:      p.area_sqm != null ? String(p.area_sqm) : '',
+          floor:         p.floor != null ? String(p.floor) : '',
+          rooms:         p.rooms ?? '',
+          features:      p.features ?? {},
+        });
+      })
+      .catch(err => {
+        Alert.alert('Hata', err instanceof Error ? err.message : 'Mülk yüklenemedi.');
+        router.back();
+      })
+      .finally(() => setPrefilling(false));
+  }, [id]);
 
   function update<K extends keyof PropertyFormData>(key: K, value: PropertyFormData[K]) {
     setForm(f => ({ ...f, [key]: value }));
@@ -51,13 +81,25 @@ export default function AddPropertyModal() {
     if (!validate()) return;
     try {
       setLoading(true);
-      await propertyService.create(form);
+      if (isEdit && id) {
+        await propertyService.update(id, form);
+      } else {
+        await propertyService.create(form);
+      }
       router.back();
     } catch (e: unknown) {
-      Alert.alert('Hata', e instanceof Error ? e.message : 'Mülk eklenemedi.');
+      Alert.alert('Hata', e instanceof Error ? e.message : isEdit ? 'Mülk güncellenemedi.' : 'Mülk eklenemedi.');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (prefilling) {
+    return (
+      <SafeAreaView className="flex-1 bg-surface">
+        <LoadingSpinner message="Mülk bilgileri yükleniyor..." />
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -72,7 +114,9 @@ export default function AddPropertyModal() {
             <View className="rounded-xl bg-brand-500/10 p-2">
               <Home size={18} color="#3525cd" />
             </View>
-            <Text className="text-lg font-bold text-on-surface">Yeni Mülk Ekle</Text>
+            <Text className="text-lg font-bold text-on-surface">
+              {isEdit ? 'Mülkü Düzenle' : 'Yeni Mülk Ekle'}
+            </Text>
           </View>
           <TouchableOpacity onPress={() => router.back()}>
             <X size={22} color="#6b7280" />
@@ -190,7 +234,7 @@ export default function AddPropertyModal() {
         {/* Footer */}
         <View className="px-5 py-4 border-t border-surface-container">
           <Button
-            title="Mülkü Kaydet"
+            title={isEdit ? 'Değişiklikleri Kaydet' : 'Mülkü Kaydet'}
             onPress={handleSubmit}
             loading={loading}
             size="lg"

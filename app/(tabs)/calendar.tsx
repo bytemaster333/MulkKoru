@@ -1,7 +1,7 @@
 // Ödeme Takvimi — aylık görünüm, renk kodlu göstergeler
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, RefreshControl,
+  View, Text, FlatList, TouchableOpacity, RefreshControl, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -61,9 +61,38 @@ export default function CalendarScreen() {
     }, [refetch]),
   );
 
-  async function handleMarkPaid(payment: Payment) {
-    await paymentService.markAsPaid(payment.id);
-    refetch();
+  function handleMarkPaid(payment: Payment) {
+    const fullLabel = formatCurrency(payment.amount);
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        'Ödeme Miktarı',
+        `Tam tutar: ${fullLabel}\nFarklı bir miktar girdiyseniz değiştirebilirsiniz.`,
+        async (value) => {
+          if (value == null) return;
+          const amount = parseFloat(value.replace(',', '.').replace(/[^\d.]/g, ''));
+          await paymentService.markAsPaid(payment.id, isNaN(amount) ? payment.amount : amount);
+          refetch();
+        },
+        'plain-text',
+        String(payment.amount),
+        'numeric',
+      );
+    } else {
+      Alert.alert(
+        'Ödemeyi Onayla',
+        `${fullLabel} tutarında ödeme alındı olarak işaretlensin mi?`,
+        [
+          { text: 'İptal', style: 'cancel' },
+          {
+            text: 'Ödendi',
+            onPress: async () => {
+              await paymentService.markAsPaid(payment.id);
+              refetch();
+            },
+          },
+        ],
+      );
+    }
   }
 
   return (

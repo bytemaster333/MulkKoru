@@ -80,6 +80,10 @@ export default function AddContractModal() {
     if (!form.tenant_id)                            errs.tenant_id   = 'Kiracı seçiniz.';
     if (!form.start_date)                           errs.start_date  = 'Başlangıç tarihi zorunludur.';
     if (!validatePositiveAmount(form.monthly_rent)) errs.monthly_rent = 'Geçerli kira tutarı girin.';
+    const day = parseInt(form.payment_day, 10);
+    if (!form.payment_day || isNaN(day) || day < 1 || day > 28) {
+      errs.payment_day = 'Ödeme günü 1 ile 28 arasında olmalıdır.';
+    }
     if (form.eviction_undertaking && form.eviction_undertaking_date) {
       const { valid, error } = validateEvictionUndertakingDate(form.start_date, form.eviction_undertaking_date);
       if (!valid) errs.eviction_undertaking_date = error;
@@ -206,7 +210,8 @@ export default function AddContractModal() {
               maxLength={2}
               value={form.payment_day}
               onChangeText={v => update('payment_day', v)}
-              hint="Her ayın kaçında?"
+              hint="Her ayın kaçında? (1-28)"
+              error={errors.payment_day}
             />
           </View>
 
