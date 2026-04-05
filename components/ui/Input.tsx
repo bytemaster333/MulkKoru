@@ -29,14 +29,15 @@ export function Input({
   return (
     <View className="gap-1">
       {label && (
-        <Text className="text-sm font-medium text-on-surface">{label}</Text>
+        <Text className="text-sm font-medium" style={{ color: '#131b2e' }}>{label}</Text>
       )}
       <View
         className={`flex-row items-center rounded-xl border bg-white px-3 py-3 gap-2 ${borderColor}`}
       >
         {leftIcon}
         <TextInput
-          className={`flex-1 text-base text-on-surface ${className}`}
+          className={`flex-1 text-base ${className}`}
+          style={{ color: '#131b2e' }}
           placeholderTextColor="#6b7280"
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
@@ -47,7 +48,7 @@ export function Input({
       {error ? (
         <Text className="text-xs text-error">{error}</Text>
       ) : hint ? (
-        <Text className="text-xs text-surface-muted">{hint}</Text>
+        <Text className="text-xs" style={{ color: '#6b7280' }}>{hint}</Text>
       ) : null}
     </View>
   );

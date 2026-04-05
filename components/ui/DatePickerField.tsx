@@ -48,7 +48,7 @@ export function DatePickerField({ label, value, onChange, error, hint }: DatePic
       style={{ borderColor: error ? '#ba1a1a' : '#eaedff' }}
     >
       <Text
-        className={hasValue ? 'text-on-surface text-sm' : 'text-surface-muted text-sm'}
+        style={{ color: hasValue ? '#131b2e' : '#6b7280', fontSize: 14 }}
       >
         {hasValue ? formatDisplay(value) : 'Tarih seçin'}
       </Text>
@@ -58,10 +58,19 @@ export function DatePickerField({ label, value, onChange, error, hint }: DatePic
 
   return (
     <View className="gap-1">
-      <Text className="text-sm font-medium text-on-surface">{label}</Text>
+      <Text
+        className="text-sm font-medium"
+        style={{ color: '#131b2e' }}
+      >
+        {label}
+      </Text>
       {trigger}
-      {hint && !error && <Text className="text-xs text-surface-muted">{hint}</Text>}
-      {error && <Text className="text-xs text-error">{error}</Text>}
+      {hint && !error && (
+        <Text className="text-xs" style={{ color: '#6b7280' }}>{hint}</Text>
+      )}
+      {error && (
+        <Text className="text-xs text-error">{error}</Text>
+      )}
 
       {Platform.OS === 'ios' ? (
         <Modal
@@ -99,6 +108,8 @@ export function DatePickerField({ label, value, onChange, error, hint }: DatePic
                   display="spinner"
                   onChange={handleChange}
                   locale="tr-TR"
+                  textColor="#131b2e"
+                  themeVariant="light"
                   style={{ backgroundColor: '#ffffff' }}
                 />
               </View>

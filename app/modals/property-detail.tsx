@@ -292,7 +292,7 @@ export default function PropertyDetailModal() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => router.push('/modals/add-contract')}
+              onPress={() => router.push(`/modals/add-contract?property_id=${id}`)}
               className="flex-row items-center gap-2 rounded-xl px-5 py-3"
               style={{ backgroundColor: '#3525cd' }}
             >

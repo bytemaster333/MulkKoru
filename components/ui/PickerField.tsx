@@ -27,7 +27,7 @@ export function PickerField({
 
   return (
     <View className="gap-1">
-      <Text className="text-sm font-medium text-on-surface">{label}</Text>
+      <Text className="text-sm font-medium" style={{ color: '#131b2e' }}>{label}</Text>
       <TouchableOpacity
         onPress={() => setOpen(true)}
         className="flex-row items-center justify-between rounded-xl bg-white border px-4 py-3"
@@ -36,13 +36,13 @@ export function PickerField({
         <View className="flex-1">
           {selected ? (
             <>
-              <Text className="text-on-surface text-sm font-medium">{selected.label}</Text>
+              <Text style={{ color: '#131b2e', fontSize: 14, fontWeight: '500' }}>{selected.label}</Text>
               {selected.subtitle && (
-                <Text className="text-xs text-surface-muted">{selected.subtitle}</Text>
+                <Text style={{ color: '#6b7280', fontSize: 12 }}>{selected.subtitle}</Text>
               )}
             </>
           ) : (
-            <Text className="text-surface-muted text-sm">{placeholder}</Text>
+            <Text style={{ color: '#6b7280', fontSize: 14 }}>{placeholder}</Text>
           )}
         </View>
         <ChevronDown size={18} color="#6b7280" />
@@ -57,7 +57,7 @@ export function PickerField({
         >
           <TouchableOpacity activeOpacity={1}>
             <View style={{
-              backgroundColor: '#faf8ff',
+              backgroundColor: '#ffffff',
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
             }}>

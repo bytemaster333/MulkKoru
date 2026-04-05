@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { X, FileText, AlertTriangle, Info } from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -36,9 +36,17 @@ const INITIAL: ContractFormData = {
 // ── Ana ekran ──────────────────────────────────────────────────────────────
 export default function AddContractModal() {
   const router              = useRouter();
+  const { property_id: initPropId, tenant_id: initTenantId } = useLocalSearchParams<{
+    property_id?: string;
+    tenant_id?: string;
+  }>();
   const { properties }      = useProperties();
   const { tenants }         = useTenants();
-  const [form, setForm]     = useState<ContractFormData>(INITIAL);
+  const [form, setForm]     = useState<ContractFormData>({
+    ...INITIAL,
+    property_id: initPropId ?? '',
+    tenant_id:   initTenantId ?? '',
+  });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors]   = useState<Partial<Record<keyof ContractFormData, string>>>({});
   const [depositWarning, setDepositWarning] = useState<string | null>(null);
