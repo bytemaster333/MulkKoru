@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, Alert, TouchableOpacity,
   KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { X, User, Phone, Mail, Shield, Info } from 'lucide-react-native';
+import {
+  X, User, Phone, Mail, Shield, Info, Home, AlertCircle,
+} from 'lucide-react-native';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { PickerField } from '../../components/ui/PickerField';
+import { DatePickerField } from '../../components/ui/DatePickerField';
 import { tenantService } from '../../services/tenantService';
+import { contractService } from '../../services/contractService';
+import { useProperties } from '../../hooks/useProperties';
 import {
-  validateTCKimlikNo, validatePhoneNumber, validateEmail,
+  validateTCKimlikNo, validatePhoneNumber, validateEmail, validatePositiveAmount,
 } from '../../utils/validators';
-import type { TenantFormData } from '../../types';
+import type { TenantFormData, Property } from '../../types';
+
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 const INITIAL: TenantFormData = {
   full_name: '', tc_no: '', phone: '', email: '',
@@ -20,11 +31,45 @@ const INITIAL: TenantFormData = {
 };
 
 export default function AddTenantModal() {
-  const router              = useRouter();
+  const router = useRouter();
+  const { properties, loading: propertiesLoading } = useProperties();
+
   const [form, setForm]     = useState<TenantFormData>(INITIAL);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors]   = useState<Partial<Record<keyof TenantFormData, string>>>({});
+  const [rentError, setRentError] = useState<string | undefined>();
   const [showEmergency, setShowEmergency] = useState(false);
+
+  // Bağlanacak mülk (opsiyonel)
+  const [selectedPropertyId, setSelectedPropertyId] = useState('');
+  const [monthlyRent, setMonthlyRent]               = useState('');
+  const [startDate, setStartDate]                   = useState(todayISO());
+
+  // Sadece 'Boş' mülkler
+  const emptyProperties = useMemo(
+    () => properties.filter(p => !p.active_contract),
+    [properties],
+  );
+
+  const propertyItems = useMemo(() => emptyProperties.map(p => ({
+    id:       p.id,
+    label:    p.title,
+    subtitle: `${p.city}${p.district ? ' / ' + p.district : ''}`,
+  })), [emptyProperties]);
+
+  const selectedProperty: Property | undefined = useMemo(
+    () => emptyProperties.find(p => p.id === selectedPropertyId),
+    [emptyProperties, selectedPropertyId],
+  );
+
+  function handlePropertySelect(id: string) {
+    setSelectedPropertyId(id);
+    const prop = emptyProperties.find(p => p.id === id);
+    if (prop?.monthly_rent) {
+      setMonthlyRent(String(prop.monthly_rent));
+    }
+    setRentError(undefined);
+  }
 
   function update<K extends keyof TenantFormData>(key: K, value: string) {
     setForm(f => ({ ...f, [key]: value }));
@@ -43,15 +88,39 @@ export default function AddTenantModal() {
     if (form.email && !validateEmail(form.email)) {
       errs.email = 'Geçerli bir e-posta adresi girin.';
     }
+
+    let rentErr: string | undefined;
+    if (selectedPropertyId && !validatePositiveAmount(monthlyRent)) {
+      rentErr = 'Mülk seçildiyse geçerli bir kira tutarı zorunludur.';
+    }
+
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    setRentError(rentErr);
+    return Object.keys(errs).length === 0 && !rentErr;
   }
 
   async function handleSubmit() {
     if (!validate()) return;
     try {
       setLoading(true);
-      await tenantService.create(form);
+      const tenant = await tenantService.create(form);
+
+      if (selectedPropertyId && monthlyRent && startDate) {
+        await contractService.create({
+          property_id:              selectedPropertyId,
+          tenant_id:                tenant.id,
+          start_date:               startDate,
+          end_date:                 '',
+          monthly_rent:             monthlyRent,
+          deposit_amount:           '',
+          payment_day:              '1',
+          increase_basis:           'TUFE',
+          increase_rate:            '',
+          eviction_undertaking:     false,
+          eviction_undertaking_date: '',
+          notes:                    '',
+        });
+      }
       router.back();
     } catch (e: unknown) {
       Alert.alert('Hata', e instanceof Error ? e.message : 'Kiracı eklenemedi.');
@@ -59,6 +128,8 @@ export default function AddTenantModal() {
       setLoading(false);
     }
   }
+
+  const hasProperty = !!selectedPropertyId;
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -85,6 +156,67 @@ export default function AddTenantModal() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* ── Bağlanacak Mülk ──────────────────────── */}
+          <View className="gap-3">
+            <View className="flex-row items-center gap-2">
+              <Home size={16} color="#3525cd" />
+              <Text className="text-sm font-bold text-on-surface">Hangi Mülk İçin?</Text>
+              <Text className="text-xs text-surface-muted">(Opsiyonel)</Text>
+            </View>
+
+            {!propertiesLoading && emptyProperties.length === 0 ? (
+              <View className="flex-row items-start gap-2 rounded-xl border p-3"
+                style={{ backgroundColor: '#f59e0b12', borderColor: '#f59e0b30' }}>
+                <AlertCircle size={15} color="#f59e0b" />
+                <Text className="text-xs text-on-surface flex-1 leading-4">
+                  Şu an boşta mülkünüz bulunmuyor. Kiracıyı mülksüz ekleyebilir, daha sonra sözleşme oluşturabilirsiniz.
+                </Text>
+              </View>
+            ) : (
+              <PickerField
+                label="Bağlanacak Mülk"
+                placeholder="Seçmek için dokunun (opsiyonel)"
+                items={propertyItems}
+                selectedId={selectedPropertyId}
+                onSelect={handlePropertySelect}
+                emptyMessage="Boşta mülk bulunamadı"
+              />
+            )}
+
+            {/* Seçili mülk için kira + tarih */}
+            {hasProperty && (
+              <View className="rounded-xl border border-brand-100 p-4 gap-3"
+                style={{ backgroundColor: '#3525cd08' }}>
+                <View className="flex-row items-center gap-1.5">
+                  <View className="w-2 h-2 rounded-full bg-brand-500" />
+                  <Text className="text-xs font-semibold text-brand-500">
+                    {selectedProperty?.title} için sözleşme oluşturulacak
+                  </Text>
+                </View>
+                <Input
+                  label="Aylık Kira (₺) *"
+                  placeholder="15.000"
+                  keyboardType="numeric"
+                  value={monthlyRent}
+                  onChangeText={v => { setMonthlyRent(v); setRentError(undefined); }}
+                  error={rentError}
+                />
+                <DatePickerField
+                  label="Sözleşme Başlangıç Tarihi"
+                  value={startDate}
+                  onChange={setStartDate}
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Ayraç */}
+          <View className="flex-row items-center gap-3">
+            <View className="flex-1 h-px bg-surface-container" />
+            <Text className="text-xs text-surface-muted">Kiracı Bilgileri</Text>
+            <View className="flex-1 h-px bg-surface-container" />
+          </View>
+
           {/* KVKK Uyarısı */}
           <View className="flex-row items-start gap-2 rounded-xl bg-surface-container p-3 border border-brand-100">
             <Info size={16} color="#3525cd" />
@@ -181,9 +313,14 @@ export default function AddTenantModal() {
         </ScrollView>
 
         {/* Footer */}
-        <View className="px-5 py-4 border-t border-surface-container">
+        <View className="px-5 py-4 border-t border-surface-container gap-2">
+          {hasProperty && (
+            <Text className="text-xs text-surface-muted text-center">
+              Kaydedilince kiracı + sözleşme birlikte oluşturulur
+            </Text>
+          )}
           <Button
-            title="Kiracıyı Kaydet"
+            title={hasProperty ? 'Kiracıyı Kaydet ve Sözleşme Oluştur' : 'Kiracıyı Kaydet'}
             onPress={handleSubmit}
             loading={loading}
             size="lg"
